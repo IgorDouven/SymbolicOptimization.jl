@@ -1,0 +1,13 @@
+# Julia
+Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+
+# macOS
+.DS_Store
+
+# Editors
+*.swp
+*.swo
+*~
