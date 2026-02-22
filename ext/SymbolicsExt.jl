@@ -10,6 +10,21 @@ using SymbolicOptimization
 using Symbolics
 import SymbolicUtils
 
+# ─── Compatibility shims for SymbolicUtils API ────────────────────────────────
+# Older versions (< ~1.5) use `istree` instead of `iscall`, and may lack `issym`.
+const _iscall = if isdefined(SymbolicUtils, :iscall)
+    SymbolicUtils.iscall
+else
+    SymbolicUtils.istree  # pre-1.5 name
+end
+
+const _issym = if isdefined(SymbolicUtils, :issym)
+    SymbolicUtils.issym
+else
+    # Fallback: a sym is anything symbolic that isn't a call and isn't a number
+    (x) -> !_iscall(x) && !(x isa Number) && isdefined(SymbolicUtils, :Sym) && x isa SymbolicUtils.Sym
+end
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # AbstractNode → Symbolics.Num
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -194,13 +209,13 @@ end
 
 function _from_sym_inner(x)
     # Check if it's a symbolic variable (leaf)
-    if SymbolicUtils.issym(x)
+    if _issym(x)
         name = SymbolicUtils.nameof(x)
         return SymbolicOptimization.Variable(name)
     end
 
     # Check if it's a function call
-    if SymbolicUtils.iscall(x)
+    if _iscall(x)
         op_func = SymbolicUtils.operation(x)
         raw_args = SymbolicUtils.arguments(x)
         child_nodes = SymbolicOptimization.AbstractNode[_from_sym(a) for a in raw_args]
