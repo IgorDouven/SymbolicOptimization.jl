@@ -1,7 +1,11 @@
 using Test
 using SymbolicOptimization
+using Aqua
 
 @testset "SymbolicOptimization.jl" begin
+    @testset "Aqua quality checks" begin
+        Aqua.test_all(SymbolicOptimization; ambiguities=false)
+    end
     include("test_types.jl")
     include("test_tree_utils.jl")
     include("test_printing.jl")

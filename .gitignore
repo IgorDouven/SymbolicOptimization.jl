@@ -7,6 +7,10 @@ Manifest.toml
 # macOS
 .DS_Store
 
+# Docs build artifacts
+docs/build/
+docs/Manifest.toml
+
 # Editors
 *.swp
 *.swo

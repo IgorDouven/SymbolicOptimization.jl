@@ -173,7 +173,10 @@ end
 # ───────────────────────────────────────────────────────────────────────────────
 
 """
-Maps operator symbols/functions to their safe implementations.
+    SAFE_IMPLEMENTATIONS
+
+Internal registry mapping operator symbols/functions to their safe implementations.
+Use [`register_safe_op!`](@ref) to add custom operators.
 """
 const SAFE_IMPLEMENTATIONS = Dict{Any, Function}(
     # Binary arithmetic
@@ -388,6 +391,31 @@ Get the default arity for a known operator, or nothing if unknown.
 function _get_default_arity(func)
     if haskey(DEFAULT_ARITY, func)
         return DEFAULT_ARITY[func]
+    end
+    return nothing
+end
+
+"""
+    register_safe_op!(name, func::Function; arity::Union{Int,Nothing}=nothing)
+
+Register a custom safe operator implementation.
+
+Maps `name` (a `Symbol` or `Function`) to `func` in the internal operator registry,
+so the evaluation engine uses `func` whenever it encounters `name`.
+
+If `arity` is provided, it is also recorded in the default arity table.
+
+# Example
+```julia
+# Register a custom safe operator
+my_safe_log1p(x) = x > -1 ? log1p(x) : NaN
+register_safe_op!(:log1p, my_safe_log1p; arity=1)
+```
+"""
+function register_safe_op!(name, func::Function; arity::Union{Int,Nothing}=nothing)
+    SAFE_IMPLEMENTATIONS[name] = func
+    if arity !== nothing
+        DEFAULT_ARITY[name] = arity
     end
     return nothing
 end
