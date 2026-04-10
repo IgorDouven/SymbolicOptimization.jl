@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "SymbolicOptimization.jl"
+abstract: "A Julia package for multi-objective symbolic optimization using grammar-guided genetic programming and NSGA-II."
+license: MIT
+url: "https://github.com/IgorDouven/SymbolicOptimization.jl"
+repository-code: "https://github.com/IgorDouven/SymbolicOptimization.jl"
+version: "0.1.0"
+date-released: "2026-04-10"
+authors:
+  - family-names: Douven
+    given-names: Igor
+    orcid: "https://orcid.org/0000-0003-3413-080X"
+    affiliation: "SND/CNRS/Sorbonne University"
+keywords:
+  - symbolic optimization
+  - genetic programming
+  - NSGA-II
+  - multi-objective optimization
+  - symbolic regression
+  - Julia
