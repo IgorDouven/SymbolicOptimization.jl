@@ -1,6 +1,9 @@
 # SymbolicOptimization.jl
 
 [![CI](https://github.com/IgorDouven/SymbolicOptimization.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/IgorDouven/SymbolicOptimization.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/IgorDouven/SymbolicOptimization.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/IgorDouven/SymbolicOptimization.jl)
+[![Stable Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://IgorDouven.github.io/SymbolicOptimization.jl/stable/)
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://IgorDouven.github.io/SymbolicOptimization.jl/dev/)
 
 A Julia package for **multi-objective symbolic optimization** using grammar-guided genetic programming and NSGA-II.
 

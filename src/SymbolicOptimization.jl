@@ -9,7 +9,6 @@ optimize user-defined objectives.
 - Flexible grammar specification (DSL, programmatic, or composable fragments)
 - Support for typed and untyped expression trees
 - Multi-objective optimization via NSGA-II
-- Parallelization support (threads or distributed)
 - Extensible genetic operators
 
 # Quick Start (DSL)
@@ -111,7 +110,7 @@ export sigmoid, relu, softplus, clamp01
 export safe_step, safe_sign, safe_abs, safe_pos, safe_neg
 export safe_max, safe_min, safe_ifelse, soft_ifelse
 
-export SAFE_IMPLEMENTATIONS  # Dict for registering custom safe operator implementations
+export register_safe_op!
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Phase 3: Evaluation Engine
@@ -259,15 +258,6 @@ export expression_string, expression_latex, predict, history, raw_result
 export objective_value, expr_to_tree
 # Note: add_objective! already exported above (parent function extended by both DSL and API)
 # Note: best() and pareto_front() already exported from DSL; API adds methods for SymbolicModel
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Phase 7: Pre-built Grammar Fragments (to be implemented)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# include("fragments/arithmetic.jl")
-# include("fragments/transcendental.jl")
-# include("fragments/vector_ops.jl")
-# include("fragments/probability.jl")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Symbolics.jl Integration (package extension)

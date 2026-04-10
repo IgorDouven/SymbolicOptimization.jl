@@ -49,7 +49,7 @@ import ..Variable, ..Constant, ..FunctionNode
 import ..check_constraints
 import ..add_objective!  # Defined in parent; DSL extends it for SymbolicProblem
 
-export @symbolic_regression, @optimize_expression, SymbolicProblem, solve
+export @symbolic_regression
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Tree-building operators for seed_formulas
@@ -675,12 +675,12 @@ function solve(prob::PolicyProblem)
             end
         end
         if prob.verbose && !isempty(initial_pop)
-            println("  Seeded population with $(length(initial_pop)) formulas")
+            @info "Seeded population with $(length(initial_pop)) formulas"
         end
     end
     
     if prob.verbose && prob.constraints !== nothing
-        println("  Constraints enabled ($(prob.constraints.mode) mode, $(length(prob.constraints.constraints)) constraints)")
+        @info "Constraints enabled ($(prob.constraints.mode) mode, $(length(prob.constraints.constraints)) constraints)"
     end
     
     # Run optimization
@@ -887,7 +887,7 @@ function symbolic_problem(;
     return prob
 end
 
-export SymbolicProblem, SymbolicResult
+export SymbolicProblem, SymbolicResult, PolicyProblem
 export variables!, operators!, constants!, add_function!, objectives!, add_objective!, data!, config!, mode!
 export solve, best, pareto_front, evaluate_best
 export symbolic_problem, policy_problem

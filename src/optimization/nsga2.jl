@@ -140,7 +140,7 @@ function optimize(grammar::Grammar, objectives::Vector{ObjectiveFunction}, data:
         # Early stopping
         if config.early_stop_generations > 0 && generations_without_improvement >= config.early_stop_generations
             if config.verbose
-                println("Early stopping: no improvement for $(config.early_stop_generations) generations")
+                @info "Early stopping: no improvement for $(config.early_stop_generations) generations"
             end
             break
         end
@@ -306,7 +306,7 @@ function _print_generation_stats(stats::Dict{Symbol,Any}, objectives::Vector{Obj
         push!(parts, "best=\"$tree_str\"")
     end
     
-    println("  Gen $gen: ", join(parts, ", "))
+    @info "  Gen $gen: $(join(parts, ", "))"
 end
 
 function _find_best_per_objective(population::Vector{Individual}, objectives::Vector{ObjectiveFunction})
