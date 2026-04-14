@@ -6,9 +6,18 @@ A Julia package for **multi-objective symbolic optimization** using grammar-guid
 
 Symbolic optimization evolves mathematical expressions to optimize arbitrary objectives. The result is an interpretable formula, not a black-box model.
 
-While symbolic regression finds `f(x) ≈ y` by minimizing prediction error, symbolic optimization is the general framework for searching expression space with *any* objectives — aggregator discovery, belief update rules, scoring rule design, and more.
+**This is not (just) symbolic regression.** While symbolic regression finds ``f(x) \approx y`` by minimizing prediction error, symbolic optimization is the general framework for searching expression space with *any* objectives:
+
+| Application | Objective(s) | Output |
+|-------------|--------------|--------|
+| **Aggregator discovery** | Calibration, accuracy on crowd predictions | Formula combining forecaster estimates |
+| **Belief update rules** | Match normative Bayesian updates | Heuristic for updating credences |
+| **Scoring rule design** | Proper scoring, discrimination | Formula evaluating forecaster quality |
+| **Curve fitting** | MSE on (x, y) data | Regression formula |
 
 ## Quick Start
+
+The simplest way to use SymbolicOptimization is via the [DSL Interface](@ref "DSL Interface"):
 
 ```julia
 using SymbolicOptimization
@@ -17,57 +26,52 @@ using SymbolicOptimization
 X = reshape(-3:0.2:3, :, 1)
 y = vec(X.^2 .- 1)  # Target: x² - 1
 
-# Define and solve
+# Define and solve the problem in one call
 result = solve(symbolic_problem(
     X = X,
     y = y,
     variables = [:x],
     binary_operators = [+, -, *, /],
     population = 200,
-    generations = 50,
+    generations = 50
 ))
 
+# Get the best solution
 best_sol = best(result)
-println(best_sol.expression)
+println(best_sol.expression)  # Something like "(x * x) - 1.0"
+println(best_sol.objectives)  # [MSE, complexity]
 ```
 
-## API Levels
+For more control, see the [Model API](@ref "Model API") which provides a JuMP-inspired macro-based interface.
 
-SymbolicOptimization offers multiple API levels:
-
-1. **DSL (simplest)**: `symbolic_problem()` + `solve()`
-2. **Builder pattern**: `SymbolicProblem()` with `variables!()`, `operators!()`, etc.
-3. **JuMP-style**: `@variables`, `@operators`, `@objective`, `optimize!()`
-4. **Low-level**: Manual `Grammar` construction + `optimize()`
-5. **Advanced**: Custom contexts and evaluators
-
-See the [API Reference](@ref) for full details.
-
-## JuMP-style Example
+## Installation
 
 ```julia
-using SymbolicOptimization
-
-m = SymbolicModel()
-@variables(m, x, y)
-@operators(m, binary=[+, -, *, /], unary=[sin, cos])
-@objective(m, :mse)
-@objective(m, :complexity)
-@data(m, X=X, y=y)
-optimize!(m)
-println(best(m))
+using Pkg
+Pkg.add("SymbolicOptimization")
 ```
 
-## Deep Simplification with Symbolics.jl
+## Package Overview
 
-Load the Symbolics.jl extension for algebraic simplification of discovered formulas:
+| Component | Description |
+|-----------|-------------|
+| [DSL Interface](@ref "DSL Interface") | High-level `symbolic_problem()` and builder pattern |
+| [Model API](@ref "Model API") | JuMP-style `SymbolicModel` with macros |
+| [Optimization](@ref) | NSGA-II engine, objectives, results |
+| [Core Types & Trees](@ref "Core Types & Trees") | `AbstractNode`, tree utilities |
+| [Grammar System](@ref "Grammar System") | Typed/untyped grammars, safe operations |
+| [Evaluation](@ref) | Expression evaluation, context-aware evaluation |
+| [Genetic Operators](@ref "Genetic Operators") | Generation, mutation, crossover, simplification |
+| [Advanced Topics](@ref "Advanced Topics") | Symbolics.jl integration, constraints, policy problems |
 
-```julia
-using SymbolicOptimization
-using Symbolics  # triggers the extension
+## Limitations
 
-tree = FunctionNode(:*,
-    FunctionNode(:+, Variable(:x), Constant(1.0)),
-    FunctionNode(:-, Variable(:x), Constant(1.0)))
-deep_simplify(tree)  # → x² - 1
-```
+**For high-dimensional symbolic regression** (e.g., 100+ variables), consider using
+[SymbolicRegression.jl](https://github.com/MilesCranmer/SymbolicRegression.jl) which
+implements multi-population island models optimized for that use case.
+
+SymbolicOptimization.jl excels at:
+- Custom objective functions beyond MSE
+- Domain-specific operators and grammars
+- Context-aware evaluation (belief updating, aggregation)
+- Problems with smaller search spaces but complex objectives
