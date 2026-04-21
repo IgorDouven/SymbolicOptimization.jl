@@ -73,7 +73,7 @@ predictions = evaluate_best(result, X_new)
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/IgorDouven/SymbolicOptimization.jl")
+Pkg.add("SymbolicOptimization")
 ```
 
 ## Deep Algebraic Simplification (via Symbolics.jl)
