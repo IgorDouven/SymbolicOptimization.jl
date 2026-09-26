@@ -73,6 +73,22 @@ using Statistics: sum
                 end
             end
         end
+
+        @testset "Constants-only grammar uses rng" begin
+            g = Grammar(binary_operators = [+], variables = Symbol[], constant_range = (0.0, 1.0))
+            gen(global_seed) = begin
+                Random.seed!(global_seed)
+                local_rng = MersenneTwister(1)
+                [generate_tree(g; method = FullMethod(), min_depth = 2, max_depth = 2, rng = local_rng)
+                 for _ in 1:5]
+            end
+            trees1 = gen(1)
+            trees2 = gen(2)
+            @test trees1 == trees2
+            consts = reduce(vcat, collect_constants.(trees1))
+            @test !isempty(consts)
+            @test all(c -> 0.0 <= c < 1.0, consts)
+        end
     end
     
     @testset "Mutation" begin

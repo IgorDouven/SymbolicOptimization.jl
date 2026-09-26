@@ -261,6 +261,19 @@ using Random
         strs = [node_to_string(ind.tree) for ind in result.population]
         @test allunique(strs)
         @test NSGAIIConfig().deduplicate == false
+
+        # Tiny expression space (only x, x + x, ...): deduplication must top up with
+        # fresh individuals and, once no new expressions can be found, accept duplicates
+        tiny = Grammar(binary_operators = [+], variables = [:x], constant_prob = 0.0)
+        tiny_config = NSGAIIConfig(population_size = 20, max_generations = 3, min_depth = 1,
+                                   max_depth = 2, simplify_prob = 0.0, verbose = false,
+                                   deduplicate = true)
+        tiny_result = optimize(tiny, [mse_objective(), complexity_objective()], data;
+                               config = tiny_config, rng = MersenneTwister(3))
+        tiny_strs = [node_to_string(ind.tree) for ind in tiny_result.population]
+        @test length(tiny_result.population) == 20
+        @test all(ind -> length(ind.objectives) == 2, tiny_result.population)
+        @test length(unique(tiny_strs)) < 20  # fallback admitted duplicates
     end
 
     @testset "Reproducibility independent of global RNG" begin
