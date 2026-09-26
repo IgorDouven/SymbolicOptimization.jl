@@ -218,7 +218,7 @@ function _generate_terminal(grammar::Grammar, target_type::Symbol, rng::Abstract
     elseif n_vars == 0
         # No variables available, must use constant
         const_spec = rand(rng, valid_consts)
-        return Constant(const_spec.sampler())
+        return Constant(_sample(const_spec, rng))
     end
     
     # Use grammar's constant_prob to decide between constant and variable
@@ -226,7 +226,7 @@ function _generate_terminal(grammar::Grammar, target_type::Symbol, rng::Abstract
     if rand(rng) < grammar.constant_prob
         # Generate a constant
         const_spec = rand(rng, valid_consts)
-        return Constant(const_spec.sampler())
+        return Constant(_sample(const_spec, rng))
     else
         # Choose a variable
         var_spec = rand(rng, valid_vars)

@@ -104,6 +104,11 @@ function optimize(grammar::Grammar, objectives::Vector{ObjectiveFunction}, data:
         # Combine parent and offspring populations
         combined = vcat(population, offspring)
         
+        # Optional removal of duplicate expressions (keeps the population diverse)
+        if config.deduplicate
+            combined = _deduplicate(combined, grammar, config, objectives, data_with_grammar, rng)
+        end
+        
         # Environmental selection
         population = environmental_select!(combined, config.population_size, objectives)
         
@@ -189,6 +194,38 @@ function _create_initial_population(grammar::Grammar, n::Int, config::NSGAIIConf
     end
     
     return population
+end
+
+"""
+    _deduplicate(individuals, grammar, config, objectives, data, rng) -> Vector{Individual}
+
+Keep the first individual for each distinct expression string; if fewer than
+`config.population_size` remain, top up with freshly generated, evaluated individuals
+(themselves deduplicated as far as a bounded number of attempts allows).
+"""
+function _deduplicate(individuals::Vector{Individual}, grammar::Grammar, config::NSGAIIConfig,
+                      objectives::Vector{ObjectiveFunction}, data::Dict, rng::AbstractRNG)
+    seen = Set{String}()
+    unique_inds = Individual[]
+    for ind in individuals
+        key = node_to_string(ind.tree)
+        key in seen && continue
+        push!(seen, key)
+        push!(unique_inds, ind)
+    end
+    # Top up with fresh random individuals, avoiding new duplicates where possible
+    attempts = 0
+    while length(unique_inds) < config.population_size
+        attempts += 1
+        cand = _create_initial_population(grammar, 1, config, rng)[1]
+        key = node_to_string(cand.tree)
+        if !(key in seen) || attempts > 20 * config.population_size
+            push!(seen, key)
+            _evaluate_population!([cand], objectives, data)
+            push!(unique_inds, cand)
+        end
+    end
+    return unique_inds
 end
 
 function _evaluate_population!(population::Vector{Individual}, objectives::Vector{ObjectiveFunction}, data::Dict)

@@ -1,4 +1,5 @@
 using Statistics: mean, sum
+using Random
 
 @testset "Grammar System" begin
     
@@ -98,6 +99,20 @@ using Statistics: mean, sum
             c = sample_constant(g)
             @test 0.0 <= c <= 10.0
         end
+
+        # Explicit RNG makes sampling reproducible regardless of the global RNG
+        Random.seed!(1)
+        a = [sample_constant(g; rng=MersenneTwister(3)) for _ in 1:5]
+        Random.seed!(2)
+        b = [sample_constant(g; rng=MersenneTwister(3)) for _ in 1:5]
+        @test a == b
+
+        # Range samplers accept an RNG; legacy zero-argument samplers still work
+        spec = ConstantSpec((0.0, 1.0))
+        @test spec.sampler(MersenneTwister(5)) == spec.sampler(MersenneTwister(5))
+        @test 0.0 <= spec.sampler() < 1.0
+        legacy = ConstantSpec(:Any, () -> 42.0, 1.0)
+        @test SymbolicOptimization._sample(legacy, MersenneTwister(1)) == 42.0
     end
     
     @testset "Complexity" begin

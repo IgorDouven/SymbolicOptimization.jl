@@ -97,7 +97,7 @@ end
 
 function _point_mutate_node(node::Constant, grammar::Grammar, rng::AbstractRNG)
     # Replace with new constant
-    Constant(sample_constant(grammar))
+    Constant(sample_constant(grammar; rng=rng))
 end
 
 function _point_mutate_node(node::Variable, grammar::Grammar, rng::AbstractRNG)
