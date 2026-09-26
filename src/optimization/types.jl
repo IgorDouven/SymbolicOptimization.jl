@@ -202,6 +202,8 @@ Configuration for the NSGA-II algorithm.
 - `simplify_prob::Float64`: Probability of simplifying offspring
 - `verbose::Bool`: Print progress information
 - `early_stop_generations::Int`: Stop if no improvement for this many generations (0 = disabled)
+- `deduplicate::Bool`: Before environmental selection, drop individuals whose expression string
+  duplicates one already present, refilling with fresh random individuals (default `false`)
 """
 @kwdef struct NSGAIIConfig
     population_size::Int = 100
@@ -217,6 +219,7 @@ Configuration for the NSGA-II algorithm.
     simplify_prob::Float64 = 0.1
     verbose::Bool = true
     early_stop_generations::Int = 0
+    deduplicate::Bool = false
 end
 
 function Base.show(io::IO, config::NSGAIIConfig)

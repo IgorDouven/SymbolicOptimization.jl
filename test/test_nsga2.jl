@@ -248,4 +248,63 @@ using Random
         # Best individual should be selected
         @test any(s -> s.objectives == [1.0, 1.0], selected)
     end
+    
+    @testset "Deduplication" begin
+        rng = MersenneTwister(1)
+        grammar = Grammar(binary_operators = [+, -, *], variables = [:x], constant_range = (-1.0, 1.0))
+        x = collect(-1.0:0.25:1.0)
+        data = Dict{Symbol,Any}(:X => reshape(x, :, 1), :y => x .^ 2, :var_names => [:x])
+        config = NSGAIIConfig(population_size = 30, max_generations = 15, verbose = false,
+                              deduplicate = true)
+        result = optimize(grammar, [mse_objective(), complexity_objective()], data;
+                          config = config, rng = rng)
+        strs = [node_to_string(ind.tree) for ind in result.population]
+        @test allunique(strs)
+        @test NSGAIIConfig().deduplicate == false
+
+        # Tiny expression space (only x, x + x, ...): deduplication must top up with
+        # fresh individuals and, once no new expressions can be found, accept duplicates
+        tiny = Grammar(binary_operators = [+], variables = [:x], constant_prob = 0.0)
+        tiny_config = NSGAIIConfig(population_size = 20, max_generations = 3, min_depth = 1,
+                                   max_depth = 2, simplify_prob = 0.0, verbose = false,
+                                   deduplicate = true)
+        tiny_result = optimize(tiny, [mse_objective(), complexity_objective()], data;
+                               config = tiny_config, rng = MersenneTwister(3))
+        tiny_strs = [node_to_string(ind.tree) for ind in tiny_result.population]
+        @test length(tiny_result.population) == 20
+        @test all(ind -> length(ind.objectives) == 2, tiny_result.population)
+        @test length(unique(tiny_strs)) < 20  # fallback admitted duplicates
+    end
+
+    @testset "Reproducibility independent of global RNG" begin
+        grammar = Grammar(binary_operators = [+, -, *], unary_operators = [sin],
+                          variables = [:x], constant_range = (-2.0, 2.0))
+        x = collect(-1.0:0.25:1.0)
+        data = Dict{Symbol,Any}(:X => reshape(x, :, 1), :y => 1.5 .* x .^ 2 .- 0.7,
+                                :var_names => [:x])
+        objectives = [mse_objective(), complexity_objective()]
+        config = NSGAIIConfig(population_size = 30, max_generations = 10, verbose = false)
+
+        run_with_global_seed(global_seed) = begin
+            Random.seed!(global_seed)
+            optimize(grammar, objectives, data; config = config, rng = MersenneTwister(7))
+        end
+        r1 = run_with_global_seed(1)
+        r2 = run_with_global_seed(12345)
+
+        # Constants must actually be involved for this test to be meaningful
+        @test any(ind -> !isempty(collect_constants(ind.tree)), r1.population)
+        @test length(r1.population) == length(r2.population)
+        @test all(a.tree == b.tree for (a, b) in zip(r1.population, r2.population))
+        @test all(isequal(a.objectives, b.objectives) for (a, b) in zip(r1.population, r2.population))
+
+        # Same with deduplication enabled (top-up individuals are drawn from rng too)
+        dconfig = NSGAIIConfig(population_size = 30, max_generations = 10, verbose = false,
+                               deduplicate = true)
+        Random.seed!(1)
+        d1 = optimize(grammar, objectives, data; config = dconfig, rng = MersenneTwister(7))
+        Random.seed!(999)
+        d2 = optimize(grammar, objectives, data; config = dconfig, rng = MersenneTwister(7))
+        @test all(a.tree == b.tree for (a, b) in zip(d1.population, d2.population))
+    end
 end

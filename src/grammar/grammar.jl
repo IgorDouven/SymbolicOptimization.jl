@@ -64,6 +64,11 @@ end
     ConstantSpec
 
 Specification for how to sample constants.
+
+`sampler` may accept an `AbstractRNG` argument (`sampler(rng)`); if it does, constants are
+drawn from the RNG passed to generation/mutation/`optimize`, making runs reproducible.
+Zero-argument samplers (`sampler()`) are still supported but draw from whatever RNG they
+use internally (typically the global RNG).
 """
 struct ConstantSpec
     type::Symbol
@@ -71,9 +76,21 @@ struct ConstantSpec
     complexity::Float64
 end
 
+# Uniform sampler over [lo, hi); callable with or without an explicit RNG.
+struct _UniformConstantSampler <: Function
+    lo::Float64
+    hi::Float64
+end
+(s::_UniformConstantSampler)(rng::AbstractRNG = Random.default_rng()) = s.lo + rand(rng) * (s.hi - s.lo)
+
 function ConstantSpec(range::Tuple{<:Real, <:Real}; type::Symbol=:Any, complexity::Float64=1.0)
     lo, hi = Float64.(range)
-    ConstantSpec(type, () -> lo + rand() * (hi - lo), complexity)
+    ConstantSpec(type, _UniformConstantSampler(lo, hi), complexity)
+end
+
+"""Draw a value from `spec`, passing `rng` to the sampler when it accepts one."""
+function _sample(spec::ConstantSpec, rng::AbstractRNG)
+    applicable(spec.sampler, rng) ? spec.sampler(rng) : spec.sampler()
 end
 
 # ───────────────────────────────────────────────────────────────────────────────
@@ -511,8 +528,12 @@ num_operators(g::Grammar) = length(g.operators)
 """Get the number of variables."""
 num_variables(g::Grammar) = length(g.variables)
 
-"""Sample a constant value."""
-function sample_constant(g::Grammar, type::Symbol=:Any)
+"""
+    sample_constant(g::Grammar, type::Symbol=:Any; rng=Random.GLOBAL_RNG) -> Float64
+
+Sample a constant value, using `rng` for both the choice of constant spec and the value.
+"""
+function sample_constant(g::Grammar, type::Symbol=:Any; rng::AbstractRNG=Random.GLOBAL_RNG)
     specs = if type == :Any
         g.constants
     else
@@ -524,8 +545,8 @@ function sample_constant(g::Grammar, type::Symbol=:Any)
         return 0.0
     end
     
-    spec = rand(specs)
-    return spec.sampler()
+    spec = rand(rng, specs)
+    return _sample(spec, rng)
 end
 
 # ───────────────────────────────────────────────────────────────────────────────

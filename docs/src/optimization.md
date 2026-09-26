@@ -76,6 +76,36 @@ config = NSGAIIConfig(
 )
 ```
 
+### Deduplication
+
+Genetic programming populations often fill up with copies of the same expression, which
+reduces diversity and wastes evaluations. Setting `deduplicate = true` removes duplicates
+before each environmental selection step: of all individuals whose expressions print
+identically (via `node_to_string`), only the first is kept. If fewer than `population_size`
+individuals remain, the population is topped up with freshly generated random individuals,
+which are evaluated and themselves kept distinct where possible.
+
+```julia
+config = NSGAIIConfig(population_size = 100, max_generations = 50, deduplicate = true)
+```
+
+The option is off by default (`deduplicate = false`), so existing code behaves as before.
+
+### Reproducibility
+
+Pass an explicit random number generator to make a run reproducible:
+
+```julia
+using Random
+result = optimize(grammar, objectives, data; config=config, rng=MersenneTwister(42))
+```
+
+All randomness during tree generation, mutation, crossover, selection and constant
+sampling is drawn from `rng`, so the result does not depend on the state of the global RNG.
+Custom constant samplers passed to [`ConstantSpec`](@ref) should accept an `AbstractRNG`
+argument (`sampler(rng)`) to take part in this; zero-argument samplers still work but draw
+from whatever RNG they use internally.
+
 ## Results
 
 [`NSGAIIResult`](@ref) holds the optimization output:
